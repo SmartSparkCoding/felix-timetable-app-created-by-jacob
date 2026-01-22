@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>School Timetable Countdown</title>
+<style>
+    body {
+        background: white;
+        font-family: Arial, Helvetica, sans-serif;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        margin: 0;
+    }
+    #container {
+        font-size: 2rem;
+        max-width: 90%;
+        position: relative;
+    }
+    #main-line {
+        font-size: 2.2rem;
+        margin-bottom: 0.5rem;
+    }
+    #sub-line {
+        font-size: 1.4rem;
+        color: #555;
+    }
+    #week-toggle {
+        position: absolute;
+        top: -40px;
+        right: 0;
+        font-size: 0.9rem;
+    }
+    #week-toggle button {
+        padding: 4px 10px;
+        margin-left: 4px;
+        border: 1px solid #ccc;
+        background: #f5f5f5;
+        cursor: pointer;
+        border-radius: 4px;
+    }
+    #week-toggle button.active {
+        background: #0078d4;
+        color: white;
+        border-color: #0078d4;
+    }
+
+    video {
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        position: absolute;
+        pointer-events: none;
+    }
+</style>
+</head>
+<body>
+
+<div id="container">
+    <div id="week-toggle">
+        Week:
+        <button id="weekA">A</button>
+        <button id="weekB">B</button>
+    </div>
+    <div id="main-line">Loading...</div>
+    <div id="sub-line"></div>
+</div>
+
+<video id="pipVideo" muted autoplay playsinline></video>
+
+<script>
+// ---------- CONFIG (single TIMES object, include all referenced keys) ----------
+const TIMES = {
+    form:      { start: "08:00", end: "08:35" },
+    formA:     { start: "08:00", end: "08:35" },
+    formB:     { start: "13:50", end: "14:10" },
+
+    p1:        { start: "08:40", end: "09:25" },
+    p2:        { start: "09:30", end: "10:15" },
+    p3:        { start: "10:20", end: "11:05" },
+    break:     { start: "11:05", end: "11:20" },
+    p4:        { start: "11:25", end: "12:10" },
+    p5:        { start: "12:15", end: "13:00" },
+    lunch:     { start: "13:00", end: "13:45" },
+    lunchA:    { start: "13:30", end: "13:45" },
+    lunchB:    { start: "13:00", end: "13:15" },
+    lunchC:    { start: "13:30", end: "13:45" },
+    lunchD:    { start: "13:00", end: "13:25" },
+
+    MT:        { start: "13:15", end: "13:45" },
+    MB:        { start: "13:00", end: "13:30" },
+    ML:        { start: "13:15", end: "13:45" },
+    FS:        { start: "13:25", end: "13:50" },
+
+    p6:        { start: "14:15", end: "15:00" },
+    p7:        { start: "15:05", end: "15:50" },
+    activity:  { start: "15:50", end: "16:40" },
+    longAct:   { start: "15:50", end: "17:30" }
+};
+
+// ---------- TIMETABLE ----------
+const TIMETABLE = {
+    A: {
+        1: [
+            {type:"formA",label:"Form Time - Somerville IT"},
+            {type:"p1",label:"Music - Music Technology Suite"},
+            {type:"p2",label:"French - Chaucer 1"},
+            {type:"p3",label:"Global Perspectives - Brake 4"},
+            {type:"break",label:"Break"},
+            {type:"p4",label:"Computer Science - Somerville IT"},
+            {type:"p5",label:"English - Coronation 13"},
+            {type:"lunchB",label:"Lunch - 13:00"},
+            {type:"MT",label:"Music Theory - Music Technology Suite"},
+            {type:"formB",label:"Form Time - Somerville IT"},
+            {type:"p6",label:"Physics - Jubilee 12"},
+            {type:"p7",label:"French - Chaucer 1"},
+            {type:"activity",label:"Composition - Music Technology Suite"}
+        ],
+        2: [
+            {type:"formA",label:"Form Time - Somerville IT"},
+            {type:"p1",label:"Maths - Coronation 4"},
+            {type:"p2",label:"Music - Music Technology Suite"},
+            {type:"p3",label:"Music - Music Technology Suite"},
+            {type:"break",label:"Break"},
+            {type:"p4",label:"Games - Nightingale Gym"},
+            {type:"p5",label:"Games - Nightingale Gym"},
+            {type:"lunchD",label:"Lunch - 13:00"},
+            {type:"FS",label:"French Speaking Session - Chaucer 1"},
+            {type:"formB",label:"Form Time - Somerville IT"},
+            {type:"p6",label:"Biology - Jubilee 3"},
+            {type:"p7",label:"French - Chaucer 1"},
+            {type:"activity",label:"English Booster - Coronation 13"}
+        ],
+        3: [
+            {type:"formA",label:"Form Time - Somerville IT"},
+            {type:"p1",label:"Maths - Coronation 4"},
+            {type:"p2",label:"Chemistry - Jubilee 2"},
+            {type:"p3",label:"Global Perspectives - Brake 4"},
+            {type:"break",label:"Break"},
+            {type:"p4",label:"Physics - Jubilee 12"},
+            {type:"p5",label:"English - Coronation 13"},
+            {type:"MB",label:"Maths Booster - Coronation 4"},
+            {type:"lunchC",label:"Lunch - 13:30"},
+            {type:"formB",label:"Form Time - Somerville IT"},
+            {type:"p6",label:"Biology - Jubilee 3"},
+            {type:"p7",label:"French - Chaucer 1"},
+            {type:"longAct",label:"Orchestra - Brake Hall"}
+        ],
+        4: [
+            {type:"formA",label:"Form Time - Somerville IT"},
+            {type:"p1",label:"PSHE - Somerville IT"},
+            {type:"p2",label:"Global Perspectives - Brake 4"},
+            {type:"p3",label:"Computer Science - Somerville IT"},
+            {type:"break",label:"Break"},
+            {type:"p4",label:"English - Coronation 13"},
+            {type:"p5",label:"Chemistry - Jubilee 2"},
+            {type:"lunchB",label:"Lunch - 13:00"},
+            {type:"ML",label:"Flute Lesson - Practice Room 1"},
+            {type:"formB",label:"Form Time - Somerville IT"},
+            {type:"p6",label:"Games - Nightingale Gym"},
+            {type:"p7",label:"Games - Nightingale Gym"}
+        ],
+        5: [
+            {type:"formA",label:"Form Time - Somerville IT"},
+            {type:"p1",label:"Maths - Coronation 4"},
+            {type:"p2",label:"English - Coronation 13"},
+            {type:"p3",label:"English - Coronation 13"},
+            {type:"break",label:"Break"},
+            {type:"p4",label:"Computer Science - Somerville IT"},
+            {type:"p5",label:"Computer Science - Somerville IT"},
+            {type:"lunchA",label:"Lunch - 13:30"},
+            {type:"formB",label:"Form Time - Somerville IT"},
+            {type:"p6",label:"Chemistry - Jubilee 2"},
+            {type:"p7",label:"Biology - Jubilee 3"}
+        ]
+    },
+    B: {
+        1: [
+            {type:"formA",label:"Form Time - Somerville IT"},
+            {type:"p1",label:"Music - Music Technology Suite"},
+            {type:"p2",label:"Music - Music Technology Suite"},
+            {type:"p3",label:"English - Coronation 13"},
+            {type:"break",label:"Break"},
+            {type:"p4",label:"Maths - Coronation 4"},
+            {type:"p5",label:"Computer Science - Somerville IT"},
+            {type:"lunchB",label:"Lunch - 13:00"},
+            {type:"MT",label:"Music Theory - Music Technology Suite"},
+            {type:"formB",label:"Lunch - 13:00"},
+            {type:"p6",label:"Global Perspectives - Brake 4"},
+            {type:"p7",label:"Chemistry - Jubilee 2"},
+            {type:"activity",label:"Composition - Music Technology Suite"}
+        ],
+        2: [
+            {type:"form",label:"Form Time - Somerville IT"},
+            {type:"p1",label:"Biology - Jubilee 3"},
+            {type:"p2",label:"Physics - Jubilee 12"},
+            {type:"p3",label:"Music - Octagon 2"},
+            {type:"break",label:"Break"},
+            {type:"p4",label:"Maths - Coronation 4"},
+            {type:"p5",label:"French - Chaucer 1"},
+            {type:"lunchD",label:"Lunch - 13:00"},
+            {type:"FS",label:"French Speaking Session - Chaucer 1"},
+            {type:"formB",label:"Form Time - Somerville IT"},
+            {type:"p6",label:"Chemistry - Jubilee 2"},
+            {type:"p7",label:"French - Chaucer 1"},
+            {type:"activity",label:"English Booster - Coronation 13"}
+        ],
+        3: [
+            {type:"form",label:"Form Time - Somerville IT"},
+            {type:"p1",label:"Global Perspectives - Brake 4"},
+            {type:"p2",label:"Global Perspectives - Brake 4"},
+            {type:"p3",label:"Physics - Jubilee 12"},
+            {type:"break",label:"Break"},
+            {type:"p4",label:"Music - Octagon 2"},
+            {type:"p5",label:"Biology - Jubilee 3"},
+            {type:"MB",label:"Maths Booster - Coronation 4"},
+            {type:"lunchC",label:"Lunch - 13:30"},
+            {type:"formB",label:"Form Time - Somerville IT"},
+            {type:"p6",label:"Maths - Coronation 4"},
+            {type:"p7",label:"French - Chaucer 1"},
+            {type:"activity",label:"DofE Club Language Lab"}
+        ],
+        4: [
+            {type:"form",label:"Form Time"},
+            {type:"p1",label:"PSHE - Somerville IT"},
+            {type:"p2",label:"Computer Science - Somerville IT"},
+            {type:"p3",label:"Computer Science - Somerville IT"},
+            {type:"break",label:"Break"},
+            {type:"p4",label:"Physics - Jubilee 12"},
+            {type:"p5",label:"Global Perspectives - Brake 4"},
+            {type:"lunchB",label:"Lunch - 13:00"},
+            {type:"ML",label:"Flute Lesson - Practice Room 1"},
+            {type:"formB",label:"Form Time - Somerville IT"},
+            {type:"p6",label:"Games - Nightingale Gym"},
+            {type:"p7",label:"Games - Nightingale Gym"}
+        ],
+        5: [
+            {type:"form",label:"Form Time - Somerville IT"},
+            {type:"p1",label:"Chemistry - Jubilee 2"},
+            {type:"p2",label:"Maths - Coronation 4"},
+            {type:"p3",label:"Maths - Coronation 4"},
+            {type:"break",label:"Break"},
+            {type:"p4",label:"English - Coronation 13"},
+            {type:"p5",label:"English - Coronation 13"},
+            {type:"lunchA",label:"Lunch - 13:30"},
+            {type:"formB",label:"Form Time - Somerville IT"},
+            {type:"p6",label:"Physics - Jubilee 12"},
+            {type:"p7",label:"Biology - Jubilee 3"}
+        ]
+    }
+};
+
+// ---------- WEEK SELECTOR (MANUAL) ----------
+function getWeekType() {
+    const stored = localStorage.getItem("weekType");
+    if (stored === "A" || stored === "B") return stored;
+    localStorage.setItem("weekType", "A"); // default
+    return "A";
+}
+
+function setWeekType(week) {
+    if (week === "A" || week === "B") localStorage.setItem("weekType", week);
+}
+
+function updateWeekToggleUI() {
+    const week = getWeekType();
+    const btnA = document.getElementById("weekA");
+    const btnB = document.getElementById("weekB");
+    btnA.classList.toggle("active", week === "A");
+    btnB.classList.toggle("active", week === "B");
+}
+
+// ---------- HELPERS ----------
+function parseTimeToday(str, base) {
+    const [h, m] = str.split(":").map(Number);
+    const d = new Date(base);
+    d.setHours(h, m, 0, 0);
+    return d;
+}
+
+function diffMinutes(future, now) {
+    return Math.round((future - now) / 60000);
+}
+
+function diffHours(future, now) {
+    return (future - now) / 3600000;
+}
+
+function getEventsForToday(now) {
+    const day = now.getDay();
+    if (day < 1 || day > 5) return [];
+
+    const week = getWeekType();
+    const list = (TIMETABLE[week] && TIMETABLE[week][day]) || [];
+    const events = [];
+
+    for (const entry of list) {
+        const t = TIMES[entry.type];
+        if (!t) {
+            // If type missing in TIMES, skip but log to console for debugging
+            console.warn("Missing TIMES entry for type:", entry.type);
+            continue;
+        }
+        events.push({
+            label: entry.label,
+            start: parseTimeToday(t.start, now),
+            end: parseTimeToday(t.end, now)
+        });
+    }
+    return events;
+}
+
+// ---------- MAIN LOGIC ----------
+const mainLine = document.getElementById("main-line");
+const subLine  = document.getElementById("sub-line");
+
+const video = document.getElementById("pipVideo");
+const canvas = document.createElement("canvas");
+canvas.width = 500;
+canvas.height = 220;
+const ctx = canvas.getContext("2d");
+video.srcObject = canvas.captureStream();
+
+document.body.addEventListener("click", async () => {
+    try { await video.requestPictureInPicture(); } catch (e) { /* ignore if unavailable */ }
+});
+
+function drawPiP(a, b) {
+    // clear
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Create a vertical gradient (top to bottom)
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, "#00bfa5"); // soft teal at top
+    gradient.addColorStop(1, "#a8e6cf"); // light green at bottom
+
+    // Fill the canvas with the gradient
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Main line
+    ctx.fillStyle = "black";
+    ctx.font = "24px Arial";
+    wrapText(ctx, a, 20, 60, 460, 28);
+
+    // Sub line
+    ctx.font = "18px Arial";
+    ctx.fillStyle = "#555";
+    if (b) wrapText(ctx, b, 20, 110, 460, 22);
+
+    // Footer comment
+    ctx.font = "14px Arial";
+    ctx.fillStyle = "#444";
+    ctx.fillText("Made by Jacob in Silicon Valley", 20, canvas.height - 18);
+}
+
+// small helper for multi-line drawing
+function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+    if (!text) return;
+    const words = text.split(' ');
+    let line = '';
+    for (let n = 0; n < words.length; n++) {
+        const testLine = line + words[n] + ' ';
+        const metrics = ctx.measureText(testLine);
+        const testWidth = metrics.width;
+        if (testWidth > maxWidth && n > 0) {
+            ctx.fillText(line.trim(), x, y);
+            line = words[n] + ' ';
+            y += lineHeight;
+        } else {
+            line = testLine;
+        }
+    }
+    if (line) ctx.fillText(line.trim(), x, y);
+}
+
+function update() {
+    const now = new Date();
+    const day = now.getDay();
+
+    // WEEKEND
+    if (day === 6 || day === 0) {
+        const nextMon = new Date(now);
+        const add = (8 - day) % 7;
+        nextMon.setDate(now.getDate() + add);
+        nextMon.setHours(8,0,0,0);
+
+        const hours = diffHours(nextMon, now).toFixed(1);
+
+        mainLine.textContent = "WEEKEND";
+        subLine.textContent = `Next lesson Monday: Form Time — in ${hours} hours`;
+        drawPiP(mainLine.textContent, subLine.textContent);
+        return;
+    }
+
+    const events = getEventsForToday(now);
+
+    // ensure there's a default form start/end to compare against
+    const formStart = TIMES.form ? parseTimeToday(TIMES.form.start, now) : parseTimeToday("08:00", now);
+    const formEnd   = TIMES.form ? parseTimeToday(TIMES.form.end, now) : parseTimeToday("08:35", now);
+    const lastEnd   = events.length ? events[events.length - 1].end : formEnd;
+
+    // Before Form Time
+    if (now < formStart) {
+        const mins = diffMinutes(formStart, now);
+        mainLine.textContent = `Form Time in ${mins} minutes`;
+        subLine.textContent = "";
+        drawPiP(mainLine.textContent, "");
+        return;
+    }
+
+    // During school day (between form start and last scheduled end)
+    if (now >= formStart && now <= lastEnd) {
+        const current = events.find(e => e.start <= now && e.end >= now);
+        if (current) {
+            const minsLeft = diffMinutes(current.end, now);
+            mainLine.textContent = `Current: ${current.label}`;
+            subLine.textContent = `${minsLeft} minutes left`;
+            drawPiP(mainLine.textContent, subLine.textContent);
+            return;
+        }
+
+        const next = events.find(e => e.start > now);
+        if (next) {
+            const mins = diffMinutes(next.start, now);
+            mainLine.textContent = `Next: ${next.label}`;
+            subLine.textContent = `${mins} minutes`;
+            drawPiP(mainLine.textContent, subLine.textContent);
+            return;
+        }
+
+        // fallback: if no current or next but inside day range
+        const minsLeft = diffMinutes(lastEnd, now);
+        mainLine.textContent = `School day in progress`;
+        subLine.textContent = `${minsLeft} minutes until end`;
+        drawPiP(mainLine.textContent, subLine.textContent);
+        return;
+    }
+
+    // After school (Mon–Thu)
+    if (day >= 1 && day <= 4) {
+        const tomorrow = new Date(now);
+        tomorrow.setDate(now.getDate() + 1);
+        tomorrow.setHours(8,0,0,0);
+
+        const hours = diffHours(tomorrow, now).toFixed(1);
+
+        mainLine.textContent = `Next lesson tomorrow: Form Time`;
+        subLine.textContent = `in ${hours} hours`;
+        drawPiP(mainLine.textContent, subLine.textContent);
+        return;
+    }
+
+    // Friday after school → weekend-style message
+    if (day === 5) {
+        const nextMon = new Date(now);
+        nextMon.setDate(now.getDate() + 3);
+        nextMon.setHours(8,0,0,0);
+
+        const hours = diffHours(nextMon, now).toFixed(1);
+
+        mainLine.textContent = "WEEKEND";
+        subLine.textContent = `Next lesson Monday: Form Time — in ${hours} hours`;
+        drawPiP(mainLine.textContent, subLine.textContent);
+        return;
+    }
+}
+
+// ---------- WEEK TOGGLE WIRING ----------
+document.getElementById("weekA").addEventListener("click", () => {
+    setWeekType("A"); // corrected: set A when clicking A
+    updateWeekToggleUI();
+    update();
+});
+
+document.getElementById("weekB").addEventListener("click", () => {
+    setWeekType("B"); // corrected: set B when clicking B
+    updateWeekToggleUI();
+    update();
+});
+
+// Initial UI + loop
+updateWeekToggleUI();
+update();
+setInterval(update, 1000);
+</script>
+
+</body>
+</html>
