@@ -31,5 +31,8 @@
 
 
 
-For more info, see the README.md file on the main file section, located in **this** GitHub Repo
+For more info, see the README.md file on the main file section, located in **this** GitHub Repo. Click the link below:
+
+[Click **HERE**](https://github.com/SmartSparkCoding/felix-timetable-app-created-by-jacob/)
+
 
