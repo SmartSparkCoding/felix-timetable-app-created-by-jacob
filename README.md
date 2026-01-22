@@ -28,7 +28,7 @@
 | `version.txt` | Current version number for updater |
 | `README.md` | This document |
 | `updater.bat` | Optional: handles auto-update (if distributed with app) |
-| `/Start Files | A folder to download the start files. See other README file|
+| `/Start Files` | A folder to download the start files. See other README file |
 | `/Start Files/**Other Files**` | These are the start files. Please read the README before use |
 
 ---
@@ -44,8 +44,9 @@
      - Launch `timetable.html` in your default browser
 4. That’s it! Your timetable is now **always up-to-date**.
 
-> ⚠️ Tip: Make sure your local `version.txt` is older than the GitHub version for the first update.
-> ⚠️ **IMPORTANT FOR UPDATES**:For future use, please use start.bat to open the file unless you want to update.
+> ⚠️ Tip: Make sure your local `version.txt` is older than the GitHub version for the first update. ⚠️
+
+> ⚠️ **IMPORTANT FOR UPDATES**:For future use, please use start.bat to open the file unless you want to update. ⚠️
 
 ---
 
@@ -74,5 +75,6 @@
 - Inspired by real-world auto-updating apps 💻
 
 ---
+
 
 
