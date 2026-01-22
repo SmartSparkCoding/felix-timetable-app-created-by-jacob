@@ -1,4 +1,4 @@
-# **Ashford School Timetable App - For Felix**
+# **Timetable App - For Felix**
 
 
 
