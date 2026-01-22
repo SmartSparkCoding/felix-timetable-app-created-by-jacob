@@ -1,4 +1,4 @@
-# 🕒 Felix Timetable App
+# Felix Timetable App
 
 ![GitHub Release](https://img.shields.io/github/v/release/SmartSparkCoding/felix-timetable-app-created-by-jacob)
 ![GitHub Repo Size](https://img.shields.io/github/repo-size/SmartSparkCoding/felix-timetable-app-created-by-jacob)
@@ -28,20 +28,24 @@
 | `version.txt` | Current version number for updater |
 | `README.md` | This document |
 | `updater.bat` | Optional: handles auto-update (if distributed with app) |
+| `/Start Files | A folder to download the start files. See other README file|
+| `/Start Files/**Other Files**` | These are the start files. Please read the README before use |
 
 ---
 
 ## 📝 How to Use (For Felix)
 
-1. **Download the folder** to your computer.
-2. Open **`run.bat`**.  
+1. **Download the Start Files folder** to your computer.
+2. Edit the code with the file directory accordingly. See [**Here** for more info](https://github.com/SmartSparkCoding/felix-timetable-app-created-by-jacob/blob/main/Start%20Files/README.md)
+3. Open **`update.bat`**.  
    - This will:
      - Run the updater (check for new version)
      - Backup your old timetable
      - Launch `timetable.html` in your default browser
-3. That’s it! Your timetable is now **always up-to-date**.
+4. That’s it! Your timetable is now **always up-to-date**.
 
 > ⚠️ Tip: Make sure your local `version.txt` is older than the GitHub version for the first update.
+> ⚠️ **IMPORTANT FOR UPDATES**:For future use, please use start.bat to open the file unless you want to update.
 
 ---
 
@@ -70,4 +74,5 @@
 - Inspired by real-world auto-updating apps 💻
 
 ---
+
 
