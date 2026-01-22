@@ -1,40 +1,73 @@
-# **Timetable App - For Felix**
+# 🕒 Felix Timetable App
 
+![GitHub Release](https://img.shields.io/github/v/release/SmartSparkCoding/felix-timetable-app-created-by-jacob)
+![GitHub Repo Size](https://img.shields.io/github/repo-size/SmartSparkCoding/felix-timetable-app-created-by-jacob)
+![GitHub Last Commit](https://img.shields.io/github/last-commit/SmartSparkCoding/felix-timetable-app-created-by-jacob)
 
+> A self-updating timetable app for Felix, **built by Jacob**.  
+> Automatically backs up old versions and downloads updates from GitHub.
+> Includes starting files to download
 
-## This has been created by Jacob N 
+---
 
+## 🚀 Features
 
+- Fully **self-updating** — always fetches the latest version of `timetable.html`  
+- Keeps **automatic backups** of old files  
+- Simple **one-click launcher** (`run.bat`) for Windows  
+- Easy **version tracking** with `version.txt`  
+- Works anywhere with internet access
 
+---
 
+## 📦 Files in this Repo
 
-### Uses:
+| File | Purpose |
+|------|---------|
+| `timetable.html` | The main timetable app |
+| `version.txt` | Current version number for updater |
+| `README.md` | This document |
+| `updater.bat` | Optional: handles auto-update (if distributed with app) |
 
+---
 
+## 📝 How to Use (For Felix)
 
-This GitHub repo is used to update the current files on your device. This has to be performed **manually** and is optional. You can also check out the new code before updating here! 
+1. **Download the folder** to your computer.
+2. Open **`run.bat`**.  
+   - This will:
+     - Run the updater (check for new version)
+     - Backup your old timetable
+     - Launch `timetable.html` in your default browser
+3. That’s it! Your timetable is now **always up-to-date**.
 
+> ⚠️ Tip: Make sure your local `version.txt` is older than the GitHub version for the first update.
 
+---
 
-### Owner:
+## 🛠 Updating the App (For Jacob)
 
+1. Edit `timetable.html` with your changes.
+2. Update `version.txt` with a **new version number** (e.g., `1.0.1`).
+3. Commit and push to GitHub.
+4. Felix’s updater will automatically fetch the new version.
 
+---
 
-This app is owned by Jacob N, known as SmartSparkCoding on GitHub. He has created many HTML apps and will continue to do so.
+## 🔗 Links
 
+- Raw timetable file for updater:  
+  `https://raw.githubusercontent.com/SmartSparkCoding/felix-timetable-app-created-by-jacob/main/timetable.html`
+- Version file for updater:  
+  `https://raw.githubusercontent.com/SmartSparkCoding/felix-timetable-app-created-by-jacob/main/version.txt`
 
+---
 
-If you have any issues, you will have to contact Jacob. There is no contact details on this Repo!
+## 🎉 Credits
 
+- Created by **Jacob** (aka SmartSparkCoding)  
+- Built for and Custom Edited by **Felix**  
+- Inspired by real-world auto-updating apps 💻
 
-
-### Final Comment:
-
-
-
-Thanks for using the Ashford School Timetable App (as always **Made in Silicon Valley**) 
-
-
-
-This is to be used by Felix M **ONLY** as this **WILL NOT** match up with your timetable otherwise!
+---
 
