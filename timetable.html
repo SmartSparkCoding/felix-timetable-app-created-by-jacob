@@ -72,6 +72,7 @@
 
 <script>
 // ---------- CONFIG (single TIMES object, include all referenced keys) ----------
+const TIMES = {
     form:      { start: "08:30", end: "08:35" },
     formA:     { start: "08:30", end: "08:35" },
     formB:     { start: "13:50", end: "14:10" },
@@ -347,7 +348,7 @@ function drawPiP(a, b) {
     // Footer comment
     ctx.font = "14px Trebuchet MS";
     ctx.fillStyle = "white";
-    ctx.fillText("By Jacob N; edited by Felix M - Version 1.1.4", 20, canvas.height - 18);
+    ctx.fillText("By Jacob N; edited by Felix M - Version 1.1.5", 20, canvas.height - 18);
 }
 
 // small helper for multi-line drawing
@@ -483,6 +484,3 @@ setInterval(update, 1000);
 
 </body>
 </html>
-
-
-
