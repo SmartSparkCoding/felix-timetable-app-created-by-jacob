@@ -17,6 +17,12 @@
 - Simple **one-click launcher** (`run.bat`) for Windows  
 - Easy **version tracking** with `version.txt`  
 - Works anywhere with internet access
+- Picture in Picture (PiP) customisation
+     - Gradient colours
+     - Show/hide time
+     - Show/hide title
+     - Show/hide subtitle
+     - Show/hide footer
 
 ---
 
@@ -75,6 +81,7 @@
 - Inspired by real-world auto-updating apps 💻
 
 ---
+
 
 
 
