@@ -29,9 +29,15 @@
     }
     #week-toggle {
         position: absolute;
-        top: -40px;
+        top: -64px;
         right: 0;
         font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    #week-toggle .btns {
+        display: inline-block;
     }
     #week-toggle button {
         padding: 4px 10px;
@@ -47,6 +53,29 @@
         border-color: #0078d4;
     }
 
+    /* Colour controls */
+    #color-controls {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: transparent;
+    }
+    #color-controls label {
+        font-size: 0.85rem;
+        color: #333;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    #color-controls input[type="color"] {
+        width: 32px;
+        height: 28px;
+        padding: 0;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+    }
+
     video {
         width: 1px;
         height: 1px;
@@ -60,9 +89,19 @@
 
 <div id="container">
     <div id="week-toggle">
-        Week:
-        <button id="weekA">A</button>
-        <button id="weekB">B</button>
+        <div class="btns">
+            Week:
+            <button id="weekA">A</button>
+            <button id="weekB">B</button>
+        </div>
+        <div id="color-controls" title="PiP gradient colours (saved locally)">
+            <label for="pipTopColor">Top
+                <input id="pipTopColor" type="color" />
+            </label>
+            <label for="pipBottomColor">Bottom
+                <input id="pipBottomColor" type="color" />
+            </label>
+        </div>
     </div>
     <div id="main-line">Loading...</div>
     <div id="sub-line"></div>
@@ -272,6 +311,50 @@ function updateWeekToggleUI() {
     btnB.classList.toggle("active", week === "B");
 }
 
+// ---------- PiP Colour Controls ----------
+const PIP_TOP_KEY = "pipTopColor";
+const PIP_BOTTOM_KEY = "pipBottomColor";
+const DEFAULT_TOP = "#222222";
+const DEFAULT_BOTTOM = "#000000";
+
+function initPiPColors() {
+    try {
+        if (!localStorage.getItem(PIP_TOP_KEY)) localStorage.setItem(PIP_TOP_KEY, DEFAULT_TOP);
+        if (!localStorage.getItem(PIP_BOTTOM_KEY)) localStorage.setItem(PIP_BOTTOM_KEY, DEFAULT_BOTTOM);
+    } catch (e) {
+        // localStorage may be unavailable in some contexts; fall back to defaults
+        console.warn("localStorage unavailable for PiP colors, using defaults.", e);
+    }
+    updateColorUI();
+}
+
+function getPiPColors() {
+    let top = DEFAULT_TOP, bottom = DEFAULT_BOTTOM;
+    try {
+        top = localStorage.getItem(PIP_TOP_KEY) || DEFAULT_TOP;
+        bottom = localStorage.getItem(PIP_BOTTOM_KEY) || DEFAULT_BOTTOM;
+    } catch (e) {
+        // ignore and return defaults
+    }
+    return { top, bottom };
+}
+
+function setPiPTopColor(col) {
+    try { localStorage.setItem(PIP_TOP_KEY, col); } catch (e) { /* ignore */ }
+}
+
+function setPiPBottomColor(col) {
+    try { localStorage.setItem(PIP_BOTTOM_KEY, col); } catch (e) { /* ignore */ }
+}
+
+function updateColorUI() {
+    const topInput = document.getElementById("pipTopColor");
+    const bottomInput = document.getElementById("pipBottomColor");
+    const colors = getPiPColors();
+    if (topInput) topInput.value = colors.top;
+    if (bottomInput) bottomInput.value = colors.bottom;
+}
+
 // ---------- HELPERS ----------
 function parseTimeToday(str, base) {
     const [h, m] = str.split(":").map(Number);
@@ -323,6 +406,7 @@ canvas.height = 220;
 const ctx = canvas.getContext("2d");
 video.srcObject = canvas.captureStream();
 
+// allow entering PiP on body click (best-effort)
 document.body.addEventListener("click", async () => {
     try { await video.requestPictureInPicture(); } catch (e) { /* ignore if unavailable */ }
 });
@@ -331,8 +415,12 @@ function drawPiP(a, b) {
     // clear
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Fill the canvas with the gradient
-    ctx.fillStyle = "#222222";
+    // Fill the canvas with the vertical gradient based on user colours
+    const { top, bottom } = getPiPColors();
+    const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    grad.addColorStop(0, top);
+    grad.addColorStop(1, bottom);
+    ctx.fillStyle = grad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Main line
@@ -348,7 +436,7 @@ function drawPiP(a, b) {
     // Footer comment
     ctx.font = "14px Trebuchet MS";
     ctx.fillStyle = "white";
-    ctx.fillText("By Jacob N; edited by Felix M - Version 1.1.5", 20, canvas.height - 18);
+    ctx.fillText("By Jacob N; edited by Felix M - Version 1.2.0", 20, canvas.height - 18);
 }
 
 // small helper for multi-line drawing
@@ -465,16 +553,49 @@ function update() {
 
 // ---------- WEEK TOGGLE WIRING ----------
 document.getElementById("weekA").addEventListener("click", () => {
-    setWeekType("A"); // corrected: set A when clicking A
+    setWeekType("A");
     updateWeekToggleUI();
     update();
 });
 
 document.getElementById("weekB").addEventListener("click", () => {
-    setWeekType("B"); // corrected: set B when clicking B
+    setWeekType("B");
     updateWeekToggleUI();
     update();
 });
+
+// ---------- PiP Colour UI wiring ----------
+const topInputEl = document.getElementById("pipTopColor");
+const bottomInputEl = document.getElementById("pipBottomColor");
+
+initPiPColors();
+
+// update UI elements and wire their events
+if (topInputEl) {
+    topInputEl.addEventListener("input", (e) => {
+        const v = e.target.value;
+        setPiPTopColor(v);
+        // redraw current content with new gradient
+        drawPiP(mainLine.textContent, subLine.textContent);
+    });
+    // 'change' also in case browser uses that
+    topInputEl.addEventListener("change", (e) => {
+        setPiPTopColor(e.target.value);
+        drawPiP(mainLine.textContent, subLine.textContent);
+    });
+}
+
+if (bottomInputEl) {
+    bottomInputEl.addEventListener("input", (e) => {
+        const v = e.target.value;
+        setPiPBottomColor(v);
+        drawPiP(mainLine.textContent, subLine.textContent);
+    });
+    bottomInputEl.addEventListener("change", (e) => {
+        setPiPBottomColor(e.target.value);
+        drawPiP(mainLine.textContent, subLine.textContent);
+    });
+}
 
 // Initial UI + loop
 updateWeekToggleUI();
