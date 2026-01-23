@@ -346,7 +346,7 @@ function drawPiP(a, b) {
     // Footer comment
     ctx.font = "14px Trebuchet MS";
     ctx.fillStyle = "white";
-    ctx.fillText("By Jacob N; edited by Felix M - Version 1.1.1", 20, canvas.height - 18);
+    ctx.fillText("By Jacob N; edited by Felix M - Version 1.1.2", 20, canvas.height - 18);
 }
 
 // small helper for multi-line drawing
@@ -382,8 +382,8 @@ function update() {
 
         const hours = diffHours(nextMon, now).toFixed(1);
 
-        mainLine.textContent = "WEEKEND";
-        subLine.textContent = `Next lesson Monday: Form Time — in ${hours} hours`;
+        mainLine.textContent = "Weekend - relax!";
+        subLine.textContent = `School starts in ${hours} hours`;
         drawPiP(mainLine.textContent, subLine.textContent);
         return;
     }
@@ -419,7 +419,7 @@ function update() {
         if (next) {
             const mins = diffMinutes(next.start, now);
             mainLine.textContent = `Next: ${next.label}`;
-            subLine.textContent = `${mins} minutes`;
+            subLine.textContent = `in ${mins} minutes`;
             drawPiP(mainLine.textContent, subLine.textContent);
             return;
         }
@@ -440,8 +440,8 @@ function update() {
 
         const hours = diffHours(tomorrow, now).toFixed(1);
 
-        mainLine.textContent = `Next lesson tomorrow: Form Time`;
-        subLine.textContent = `in ${hours} hours`;
+        mainLine.textContent = `${hours} hours until the start of school tomorrow`;
+        subLine.textContent = `Sleep well!`;
         drawPiP(mainLine.textContent, subLine.textContent);
         return;
     }
@@ -453,9 +453,9 @@ function update() {
         nextMon.setHours(8,0,0,0);
 
         const hours = diffHours(nextMon, now).toFixed(1);
-
-        mainLine.textContent = "WEEKEND";
-        subLine.textContent = `Next lesson Monday: Form Time — in ${hours} hours`;
+        
+        mainLine.textContent = "Weekend - relax!";
+        subLine.textContent = `School starts in ${hours} hours`;
         drawPiP(mainLine.textContent, subLine.textContent);
         return;
     }
@@ -482,7 +482,3 @@ setInterval(update, 1000);
 
 </body>
 </html>
-
-
-
-
