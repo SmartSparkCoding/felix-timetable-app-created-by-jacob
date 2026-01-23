@@ -15,6 +15,8 @@
         --accent-2: #7b61ff;
         --card-radius: 14px;
         --shadow: 0 10px 30px rgba(12,18,30,0.45);
+        --settings-bg: rgba(3,12,20,0.95); /* solid-ish dark background for settings */
+        --settings-border: rgba(255,255,255,0.06);
     }
 
     html,body{
@@ -186,13 +188,15 @@
         top:20px;
         width:360px;
         max-width:calc(100% - 40px);
-        background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.02));
-        border:1px solid rgba(255,255,255,0.04);
+        /* Solid higher-contrast background so text is readable */
+        background-color: var(--settings-bg);
+        border:1px solid var(--settings-border);
         border-radius:12px;
         padding:14px;
         box-shadow: 0 20px 40px rgba(1,6,12,0.6);
         z-index:2000;
         display:none;
+        color: #eaf6ff;
     }
     .settings-modal.visible{ display:block; }
     .settings-row{
@@ -517,7 +521,12 @@ const canvas = document.createElement("canvas");
 canvas.width = 640;
 canvas.height = 360;
 const ctx = canvas.getContext("2d");
-video.srcObject = canvas.captureStream();
+// provide a frameRate so captureStream produces frames consistently
+try { video.srcObject = canvas.captureStream(25); } catch (e) { video.srcObject = canvas.captureStream(); }
+// try to start playback so requestPictureInPicture has frames
+if (video && typeof video.play === 'function') {
+    video.play().catch(() => { /* ignore autoplay restrictions */ });
+}
 
 // also show a visible preview canvas inside UI
 const previewCanvas = document.getElementById("previewCanvas");
@@ -612,10 +621,10 @@ function updateColorUI() {
 function getPiPSettings() {
     try {
         const raw = localStorage.getItem(PIP_SETTINGS_KEY);
-        if (!raw) { localStorage.setItem(PIP_SETTINGS_KEY, JSON.stringify(DEFAULT_PIP_SETTINGS)); return {...DEFAULT_PIP_SETTINGS}; }
+        if (!raw) { localStorage.setItem(PIP_SETTINGS_KEY, JSON.stringify(DEFAULT_PIP_SETTINGS)); return{...DEFAULT_PIP_SETTINGS}; }
         return Object.assign({}, DEFAULT_PIP_SETTINGS, JSON.parse(raw));
     } catch (e) {
-        return {...DEFAULT_PIP_SETTINGS};
+        return{...DEFAULT_PIP_SETTINGS};
     }
 }
 function setPiPSettings(obj) {
@@ -716,6 +725,18 @@ function drawPiP(mainText, subText) {
 // Export a small initial preview quickly while app loads
 function initialPreview(){
     drawPiP("Loading...", "Please wait");
+}
+
+// Ensure canvas is redrawn periodically so captureStream has frames even when text doesn't change
+let _pIpKeepAliveInterval = null;
+function startPiPKeepAlive() {
+    if (_pIpKeepAliveInterval) return;
+    _pIpKeepAliveInterval = setInterval(() => {
+        drawPiP(mainLine.textContent || "Loading...", subLine.textContent || "");
+    }, 700);
+}
+function stopPiPKeepAlive() {
+    if (_pIpKeepAliveInterval) { clearInterval(_pIpKeepAliveInterval); _pIpKeepAliveInterval = null; }
 }
 
 // ---------- MAIN LOGIC (keeps original behaviour) ----------
@@ -909,7 +930,11 @@ if (bottomInputEl) {
 document.body.addEventListener("click", async (ev) => {
     // if clicking inside settings modal we don't open PiP
     if (settingsModal.contains(ev.target)) return;
-    try { await video.requestPictureInPicture(); } catch (e) { /* ignore if unavailable */ }
+    try {
+        // ensure keep-alive is running while PiP may be open
+        startPiPKeepAlive();
+        await video.requestPictureInPicture();
+    } catch (e) { /* ignore if unavailable */ }
 });
 
 // initial preview while app starts
@@ -927,9 +952,14 @@ setInterval(update, 1000);
 // Keep updating preview canvas (so the tiny visible preview updates smoothly)
 setInterval(() => {
     // keep preview in sync with main canvas (drawPiP already copies to preview)
-    previewCtx.clearRect(0,0,previewCanvas.width, previewCanvas.height);
-    previewCtx.drawImage(canvas, 0, 0, previewCanvas.width, previewCanvas.height);
+    try {
+        previewCtx.clearRect(0,0,previewCanvas.width, previewCanvas.height);
+        previewCtx.drawImage(canvas, 0, 0, previewCanvas.width, previewCanvas.height);
+    } catch (e) {}
 }, 700);
+
+// start keep-alive so captureStream has frames even when text unchanged
+startPiPKeepAlive();
 
 </script>
 
