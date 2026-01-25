@@ -1,3 +1,927 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>School Timetable Countdown — Felix</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Google%20Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+    :root{
+        --card-bg: rgba(255,255,255,0.06);
+        --glass: rgba(255,255,255,0.06);
+        --muted: #9aa4b2;
+        --accent: #5cc1ff;
+        --accent-2: #7b61ff;
+        --card-radius: 14px;
+        --shadow: 0 10px 30px rgba(12,18,30,0.45);
+        --settings-bg: rgba(3,12,20,0.95); /* solid-ish dark background for settings */
+        --settings-border: rgba(255,255,255,0.06);
+    }
+
+    html,body{
+        height:100%;
+        margin:0;
+        background: linear-gradient(160deg,#0f1724 0%, #071226 45%, #021017 100%);
+        color: #e6eef8;
+        font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+        -webkit-font-smoothing:antialiased;
+        -moz-osx-font-smoothing:grayscale;
+    }
+
+    .wrap{
+        min-height:100%;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding:32px;
+        box-sizing:border-box;
+    }
+
+    .card{
+        width:100%;
+        max-width:980px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+        border-radius: var(--card-radius);
+        box-shadow: var(--shadow);
+        padding:22px;
+        position:relative;
+        overflow:hidden;
+        backdrop-filter: blur(8px) saturate(120%);
+        border: 1px solid rgba(255,255,255,0.04);
+    }
+
+    /* Top bar */
+    .topbar{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:12px;
+        margin-bottom:16px;
+    }
+
+    .left-controls{
+        display:flex;
+        align-items:center;
+        gap:10px;
+    }
+
+    .clock{
+        font-family: "Space Mono", monospace;
+        font-size: 2.2rem;
+        font-weight:700;
+        letter-spacing:0.5px;
+        color: #ffffff;
+        background: linear-gradient(90deg,var(--accent),var(--accent-2));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .small{
+        font-size:0.88rem;
+        color: var(--muted);
+    }
+
+    .controls{
+        display:flex;
+        align-items:center;
+        gap:8px;
+    }
+
+    .btn{
+        background: transparent;
+        border: 1px solid rgba(255,255,255,0.06);
+        color: #eaf6ff;
+        padding:8px 12px;
+        border-radius:10px;
+        cursor:pointer;
+        font-weight:600;
+        font-size:0.9rem;
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        transition: all .18s ease;
+    }
+    .btn:hover{ transform: translateY(-2px); box-shadow: 0 8px 18px rgba(0,0,0,0.35); }
+    .btn.ghost{
+        background: rgba(255,255,255,0.02);
+        border:1px solid rgba(255,255,255,0.03);
+    }
+
+    .week-buttons button{
+        min-width:40px;
+        padding:8px 14px;
+        border-radius:8px;
+        border:1px solid rgba(255,255,255,0.04);
+        background: rgba(255,255,255,0.02);
+        color: #eaf6ff;
+        font-weight:700;
+    }
+    .week-buttons button.active{
+        background: linear-gradient(90deg,var(--accent),var(--accent-2));
+        color: #021017;
+        border-color: transparent;
+    }
+
+    /* Main area */
+    .main-grid{
+        display:grid;
+        grid-template-columns: 1fr 320px;
+        gap:22px;
+        align-items:start;
+    }
+
+    .primary{
+        padding:18px;
+        border-radius:12px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));
+        border:1px solid rgba(255,255,255,0.03);
+    }
+
+    #main-line{
+        font-size:1.8rem;
+        font-weight:700;
+        color:#ffffff;
+        margin:0 0 8px 0;
+        line-height:1.05;
+    }
+
+    #sub-line{
+        color: var(--muted);
+        font-size:1.05rem;
+        margin:0 0 14px 0;
+    }
+
+    .meta{
+        display:flex;
+        align-items:center;
+        gap:12px;
+        color:var(--muted);
+        font-size:0.95rem;
+    }
+
+    .pip-preview{
+        position:relative;
+        border-radius:12px;
+        overflow:hidden;
+        background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.05));
+        padding:12px;
+        display:flex;
+        flex-direction:column;
+        gap:12px;
+        min-height:180px;
+        justify-content:center;
+        align-items:center;
+        text-align:center;
+    }
+
+    .pip-preview canvas{
+        max-width:100%;
+        border-radius:8px;
+        box-shadow: 0 6px 20px rgba(2,6,12,0.5) inset;
+    }
+
+    .settings-modal{
+        position:fixed;
+        right:20px;
+        top:20px;
+        width:360px;
+        max-width:calc(100% - 40px);
+        /* Solid higher-contrast background so text is readable */
+        background-color: var(--settings-bg);
+        border:1px solid var(--settings-border);
+        border-radius:12px;
+        padding:14px;
+        box-shadow: 0 20px 40px rgba(1,6,12,0.6);
+        z-index:2000;
+        display:none;
+        color: #eaf6ff;
+    }
+    .settings-modal.visible{ display:block; }
+    .settings-row{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:10px;
+        margin:8px 0;
+    }
+    .checkbox{
+        display:flex;
+        align-items:center;
+        gap:8px;
+        color:#eaf6ff;
+        font-weight:600;
+    }
+    .color-pair{
+        display:flex;
+        gap:8px;
+        align-items:center;
+    }
+    input[type="color"]{
+        width:44px;height:36px;border:none;padding:0;background:transparent;cursor:pointer;border-radius:8px;
+        box-shadow: 0 4px 10px rgba(2,6,12,0.45);
+    }
+
+    /* small helper */
+    .muted-block{ color:var(--muted); font-size:0.9rem; }
+
+    /* responsive */
+    @media (max-width:880px){
+        .main-grid{ grid-template-columns: 1fr; }
+        .pip-preview{ min-height:160px; }
+    }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+    <div class="card" role="application" aria-label="School timetable countdown">
+        <div class="topbar">
+            <div class="left-controls">
+                <div>
+                    <div class="clock" id="clock">--:--:--</div>
+                    <div class="small muted-block" id="todayLabel">Loading…</div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <div class="week-buttons" role="tablist" aria-label="Week toggle">
+                    <button id="weekA" class="btn ghost" aria-pressed="false">Week A</button>
+                    <button id="weekB" class="btn ghost" aria-pressed="false">Week B</button>
+                </div>
+                <button id="settingsBtn" class="btn" title="PiP and appearance settings">⚙ Settings</button>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <div class="primary" aria-live="polite">
+                <div id="main-line">Loading...</div>
+                <div id="sub-line"></div>
+                <div class="meta" id="meta">
+                    <div id="meta-day" class="muted-block">—</div>
+                    <div id="meta-status" class="muted-block">—</div>
+                </div>
+            </div>
+
+            <div class="pip-preview" aria-hidden="true">
+                <div class="small">PiP Preview</div>
+                <!-- visible but not capturing user camera; small canvas preview (16:9) -->
+                <canvas id="previewCanvas" width="320" height="180" style="width:100%;max-width:320px;height:auto;border-radius:8px;"></canvas>
+                <div class="small muted-block">Click anywhere on the page to enter Picture-in-Picture (if supported)</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden video used for PiP streaming -->
+<video id="pipVideo" muted autoplay playsinline style="width:1px;height:1px;opacity:0;position:fixed;pointer-events:none;left:-9999px;top:-9999px;"></video>
+
+<!-- Settings panel (floating) -->
+<div id="settingsModal" class="settings-modal" role="dialog" aria-modal="false" aria-label="PiP settings">
+    <h3 style="margin:0 0 6px 0;color:#eaf6ff;">PiP Settings</h3>
+    <div class="small muted-block" style="margin-bottom:12px;">Choose what the PiP shows and the gradient colours. Settings are saved locally.</div>
+
+    <div class="settings-row">
+        <label class="checkbox"><input id="includeMain" type="checkbox" /> Show main line</label>
+        <label class="checkbox"><input id="includeSub" type="checkbox" /> Show sub line</label>
+    </div>
+    <div class="settings-row">
+        <label class="checkbox"><input id="includeTime" type="checkbox" /> Show current time</label>
+        <label class="checkbox"><input id="includeFooter" type="checkbox" /> Show footer</label>
+    </div>
+
+    <div style="height:8px"></div>
+
+    <div class="settings-row" style="flex-direction:column;align-items:stretch;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div class="small muted-block">PiP gradient colours</div>
+            <div style="display:flex;gap:8px;">
+                <input id="pipTopColor" type="color" title="Top color" />
+                <input id="pipBottomColor" type="color" title="Bottom color" />
+            </div>
+        </div>
+        <div style="margin-top:8px;font-size:0.85rem;color:var(--muted);">Tip: use contrasting colours for readable white text overlay.</div>
+    </div>
+
+    <div style="height:12px"></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;">
+        <button id="closeSettings" class="btn ghost">Close</button>
+        <button id="saveSettings" class="btn">Save</button>
+    </div>
+</div>
+
+<script>
+// ---------- CONFIG (single TIMES object, include all referenced keys) ----------
+const TIMES = {
+    form:      { start: "08:30", end: "08:35" },
+    formA:     { start: "08:30", end: "08:35" },
+    formB:     { start: "13:50", end: "14:10" },
+
+    p1:        { start: "08:40", end: "09:25" },
+    p2:        { start: "09:30", end: "10:15" },
+    p3:        { start: "10:20", end: "11:05" },
+    break:     { start: "11:05", end: "11:20" },
+    p4:        { start: "11:25", end: "12:10" },
+    p5:        { start: "12:15", end: "13:00" },
+    lunch:     { start: "13:00", end: "13:45" },
+    lunchA:    { start: "13:00", end: "13:45" },
+    lunchB:    { start: "13:00", end: "13:15" },
+    lunchC:    { start: "13:30", end: "13:45" },
+    lunchD:    { start: "13:00", end: "13:25" },
+
+    MT:        { start: "13:15", end: "13:45" },
+    MB:        { start: "13:00", end: "13:30" },
+    ML:        { start: "13:15", end: "13:45" },
+    FS:        { start: "13:25", end: "13:50" },
+
+    p6:        { start: "14:15", end: "15:00" },
+    p7:        { start: "15:05", end: "15:50" },
+    activity:  { start: "15:50", end: "16:40" },
+    longAct:   { start: "15:50", end: "17:30" }
+};
+
+// ---------- TIMETABLE (unchanged) ----------
+const TIMETABLE = {
+    A: {
+        1: [
+            {type:"formA",label:"Form Time - Somerville IT"},
+            {type:"p1",label:"Music - Music Technology Suite"},
+            {type:"p2",label:"French - Chaucer 1"},
+            {type:"p3",label:"Global Perspectives - Brake 4"},
+            {type:"break",label:"Break"},
+            {type:"p4",label:"Computer Science - Somerville IT"},
+            {type:"p5",label:"English - Coronation 13"},
+            {type:"lunchB",label:"Lunch - 13:00"},
+            {type:"MT",label:"Music Theory - Music Technology Suite"},
+            {type:"formB",label:"Form Time - Somerville IT"},
+            {type:"p6",label:"Physics - Jubilee 12"},
+            {type:"p7",label:"French - Chaucer 1"},
+            {type:"activity",label:"Composition - Music Technology Suite"}
+        ],
+        2: [
+            {type:"formA",label:"Form Time - Somerville IT"},
+            {type:"p1",label:"Maths - Coronation 4"},
+            {type:"p2",label:"Music - Music Technology Suite"},
+            {type:"p3",label:"Music - Music Technology Suite"},
+            {type:"break",label:"Break"},
+            {type:"p4",label:"Games - Nightingale Gym"},
+            {type:"p5",label:"Games - Nightingale Gym"},
+            {type:"lunchD",label:"Lunch - 13:00"},
+            {type:"FS",label:"French Speaking Session - Chaucer 1"},
+            {type:"formB",label:"Form Time - Somerville IT"},
+            {type:"p6",label:"Biology - Jubilee 3"},
+            {type:"p7",label:"French - Chaucer 1"},
+            {type:"activity",label:"English Booster - Coronation 13"}
+        ],
+        3: [
+            {type:"formA",label:"Form Time - Somerville IT"},
+            {type:"p1",label:"Maths - Coronation 4"},
+            {type:"p2",label:"Chemistry - Jubilee 2"},
+            {type:"p3",label:"Global Perspectives - Brake 4"},
+            {type:"break",label:"Break"},
+            {type:"p4",label:"Physics - Jubilee 12"},
+            {type:"p5",label:"English - Coronation 13"},
+            {type:"MB",label:"Maths Booster - Coronation 4"},
+            {type:"lunchC",label:"Lunch - 13:30"},
+            {type:"formB",label:"Form Time - Somerville IT"},
+            {type:"p6",label:"Biology - Jubilee 3"},
+            {type:"p7",label:"French - Chaucer 1"},
+            {type:"longAct",label:"Orchestra - Brake Hall"}
+        ],
+        4: [
+            {type:"formA",label:"Form Time - Somerville IT"},
+            {type:"p1",label:"PSHE - Somerville IT"},
+            {type:"p2",label:"Global Perspectives - Brake 4"},
+            {type:"p3",label:"Computer Science - Somerville IT"},
+            {type:"break",label:"Break"},
+            {type:"p4",label:"English - Coronation 13"},
+            {type:"p5",label:"Chemistry - Jubilee 2"},
+            {type:"lunchB",label:"Lunch - 13:00"},
+            {type:"ML",label:"Flute Lesson - Practice Room 1"},
+            {type:"formB",label:"Form Time - Somerville IT"},
+            {type:"p6",label:"Games - Nightingale Gym"},
+            {type:"p7",label:"Games - Nightingale Gym"}
+        ],
+        5: [
+            {type:"formA",label:"Form Time - Somerville IT"},
+            {type:"p1",label:"Maths - Coronation 4"},
+            {type:"p2",label:"English - Coronation 13"},
+            {type:"p3",label:"English - Coronation 13"},
+            {type:"break",label:"Break"},
+            {type:"p4",label:"Computer Science - Somerville IT"},
+            {type:"p5",label:"Computer Science - Somerville IT"},
+            {type:"lunchA",label:"Lunch - 13:30"},
+            {type:"formB",label:"Form Time - Somerville IT"},
+            {type:"p6",label:"Chemistry - Jubilee 2"},
+            {type:"p7",label:"Biology - Jubilee 3"}
+        ]
+    },
+    B: {
+        1: [
+            {type:"formA",label:"Form Time - Somerville IT"},
+            {type:"p1",label:"Music - Music Technology Suite"},
+            {type:"p2",label:"Music - Music Technology Suite"},
+            {type:"p3",label:"English - Coronation 13"},
+            {type:"break",label:"Break"},
+            {type:"p4",label:"Maths - Coronation 4"},
+            {type:"p5",label:"Computer Science - Somerville IT"},
+            {type:"lunchB",label:"Lunch - 13:00"},
+            {type:"MT",label:"Music Theory - Music Technology Suite"},
+            {type:"formB",label:"Lunch - 13:00"},
+            {type:"p6",label:"Global Perspectives - Brake 4"},
+            {type:"p7",label:"Chemistry - Jubilee 2"},
+            {type:"activity",label:"Composition - Music Technology Suite"}
+        ],
+        2: [
+            {type:"formA",label:"Form Time - Somerville IT"},
+            {type:"p1",label:"Biology - Jubilee 3"},
+            {type:"p2",label:"Physics - Jubilee 12"},
+            {type:"p3",label:"Music - Octagon 2"},
+            {type:"break",label:"Break"},
+            {type:"p4",label:"Maths - Coronation 4"},
+            {type:"p5",label:"French - Chaucer 1"},
+            {type:"lunchD",label:"Lunch - 13:00"},
+            {type:"FS",label:"French Speaking Session - Chaucer 1"},
+            {type:"formB",label:"Form Time - Somerville IT"},
+            {type:"p6",label:"Chemistry - Jubilee 2"},
+            {type:"p7",label:"French - Chaucer 1"},
+            {type:"activity",label:"English Booster - Coronation 13"}
+        ],
+        3: [
+            {type:"formA",label:"Form Time - Somerville IT"},
+            {type:"p1",label:"Global Perspectives - Brake 4"},
+            {type:"p2",label:"Global Perspectives - Brake 4"},
+            {type:"p3",label:"Physics - Jubilee 12"},
+            {type:"break",label:"Break"},
+            {type:"p4",label:"Music - Octagon 2"},
+            {type:"p5",label:"Biology - Jubilee 3"},
+            {type:"MB",label:"Maths Booster - Coronation 4"},
+            {type:"lunchC",label:"Lunch - 13:30"},
+            {type:"formB",label:"Form Time - Somerville IT"},
+            {type:"p6",label:"Maths - Coronation 4"},
+            {type:"p7",label:"French - Chaucer 1"},
+            {type:"longAct",label:"Orchestra - Brake Hall"}
+        ],
+        4: [
+            {type:"formA",label:"Form Time"},
+            {type:"p1",label:"PSHE - Somerville IT"},
+            {type:"p2",label:"Computer Science - Somerville IT"},
+            {type:"p3",label:"Computer Science - Somerville IT"},
+            {type:"break",label:"Break"},
+            {type:"p4",label:"Physics - Jubilee 12"},
+            {type:"p5",label:"Global Perspectives - Brake 4"},
+            {type:"lunchB",label:"Lunch - 13:00"},
+            {type:"ML",label:"Flute Lesson - Practice Room 1"},
+            {type:"formB",label:"Form Time - Somerville IT"},
+            {type:"p6",label:"Games - Nightingale Gym"},
+            {type:"p7",label:"Games - Nightingale Gym"}
+        ],
+        5: [
+            {type:"formA",label:"Form Time - Somerville IT"},
+            {type:"p1",label:"Chemistry - Jubilee 2"},
+            {type:"p2",label:"Maths - Coronation 4"},
+            {type:"p3",label:"Maths - Coronation 4"},
+            {type:"break",label:"Break"},
+            {type:"p4",label:"English - Coronation 13"},
+            {type:"p5",label:"English - Coronation 13"},
+            {type:"lunchA",label:"Lunch - 13:30"},
+            {type:"formB",label:"Form Time - Somerville IT"},
+            {type:"p6",label:"Physics - Jubilee 12"},
+            {type:"p7",label:"Biology - Jubilee 3"}
+        ]
+    }
+};
+
+// ---------- STORAGE KEYS & DEFAULTS ----------
+const PIP_TOP_KEY = "pipTopColor";
+const PIP_BOTTOM_KEY = "pipBottomColor";
+const DEFAULT_TOP = "#222222";
+const DEFAULT_BOTTOM = "#000000";
+
+const PIP_SETTINGS_KEY = "pipSettings_v1"; // store JSON with booleans
+
+const DEFAULT_PIP_SETTINGS = {
+    includeMain: true,
+    includeSub: true,
+    includeTime: false,
+    includeFooter: true
+};
+
+// ---------- ELEMENTS ----------
+const mainLine = document.getElementById("main-line");
+const subLine  = document.getElementById("sub-line");
+const metaDay  = document.getElementById("meta-day");
+const metaStatus = document.getElementById("meta-status");
+const clockEl  = document.getElementById("clock");
+const todayLabel = document.getElementById("todayLabel");
+
+const video = document.getElementById("pipVideo");
+// Canvas for PiP capture: use 16:9 high resolution so text is large and crisp in PiP
+const canvas = document.createElement("canvas");
+// increase internal resolution to improve legibility in PiP (16:9)
+canvas.width = 1280;
+canvas.height = 720;
+const ctx = canvas.getContext("2d");
+// provide a frameRate so captureStream produces frames consistently
+try { video.srcObject = canvas.captureStream(25); } catch (e) { video.srcObject = canvas.captureStream(); }
+// try to start playback so requestPictureInPicture has frames
+if (video && typeof video.play === 'function') {
+    video.play().catch(() => { /* ignore autoplay restrictions */ });
+}
+
+// also show a visible preview canvas inside UI (keeps 16:9 aspect but small)
+const previewCanvas = document.getElementById("previewCanvas");
+const previewCtx = previewCanvas.getContext("2d");
+
+// ---------- HELPERS ----------
+function parseTimeToday(str, base) {
+    const [h, m] = str.split(":").map(Number);
+    const d = new Date(base);
+    d.setHours(h, m, 0, 0);
+    return d;
+}
+function diffMinutes(future, now) {
+    return Math.round((future - now) / 60000);
+}
+function diffHours(future, now) {
+    return (future - now) / 3600000;
+}
+function getEventsForToday(now) {
+    const day = now.getDay();
+    if (day < 1 || day > 5) return [];
+
+    const week = getWeekType();
+    const list = (TIMETABLE[week] && TIMETABLE[week][day]) || [];
+    const events = [];
+
+    for (const entry of list) {
+        const t = TIMES[entry.type];
+        if (!t) {
+            console.warn("Missing TIMES entry for type:", entry.type);
+            continue;
+        }
+        events.push({
+            label: entry.label,
+            start: parseTimeToday(t.start, now),
+            end: parseTimeToday(t.end, now)
+        });
+    }
+    return events;
+}
+
+// ---------- WEEK SELECTOR (MANUAL) ----------
+function getWeekType() {
+    const stored = localStorage.getItem("weekType");
+    if (stored === "A" || stored === "B") return stored;
+    localStorage.setItem("weekType", "A"); // default
+    return "A";
+}
+function setWeekType(week) {
+    if (week === "A" || week === "B") localStorage.setItem("weekType", week);
+}
+function updateWeekToggleUI() {
+    const week = getWeekType();
+    const btnA = document.getElementById("weekA");
+    const btnB = document.getElementById("weekB");
+    btnA.classList.toggle("active", week === "A");
+    btnB.classList.toggle("active", week === "B");
+    btnA.setAttribute("aria-pressed", week === "A" ? "true" : "false");
+    btnB.setAttribute("aria-pressed", week === "B" ? "true" : "false");
+}
+
+// ---------- PiP Colours & Settings ----------
+function initPiPColors() {
+    try {
+        if (!localStorage.getItem(PIP_TOP_KEY)) localStorage.setItem(PIP_TOP_KEY, DEFAULT_TOP);
+        if (!localStorage.getItem(PIP_BOTTOM_KEY)) localStorage.setItem(PIP_BOTTOM_KEY, DEFAULT_BOTTOM);
+    } catch (e) {
+        console.warn("localStorage unavailable for PiP colors, using defaults.", e);
+    }
+    updateColorUI();
+}
+
+function getPiPColors() {
+    let top = DEFAULT_TOP, bottom = DEFAULT_BOTTOM;
+    try {
+        top = localStorage.getItem(PIP_TOP_KEY) || DEFAULT_TOP;
+        bottom = localStorage.getItem(PIP_BOTTOM_KEY) || DEFAULT_BOTTOM;
+    } catch (e) {}
+    return { top, bottom };
+}
+function setPiPTopColor(col) { try { localStorage.setItem(PIP_TOP_KEY, col); } catch (e){} }
+function setPiPBottomColor(col) { try { localStorage.setItem(PIP_BOTTOM_KEY, col); } catch (e){} }
+function updateColorUI() {
+    const topInput = document.getElementById("pipTopColor");
+    const bottomInput = document.getElementById("pipBottomColor");
+    const colors = getPiPColors();
+    if (topInput) topInput.value = colors.top;
+    if (bottomInput) bottomInput.value = colors.bottom;
+}
+
+// PiP settings (which pieces to include)
+function getPiPSettings() {
+    try {
+        const raw = localStorage.getItem(PIP_SETTINGS_KEY);
+        if (!raw) { localStorage.setItem(PIP_SETTINGS_KEY, JSON.stringify(DEFAULT_PIP_SETTINGS)); return {...DEFAULT_PIP_SETTINGS}; }
+        return Object.assign({}, DEFAULT_PIP_SETTINGS, JSON.parse(raw));
+    } catch (e) {
+        return {...DEFAULT_PIP_SETTINGS};
+    }
+}
+function setPiPSettings(obj) {
+    try {
+        localStorage.setItem(PIP_SETTINGS_KEY, JSON.stringify(obj));
+    } catch (e) {}
+}
+
+// ---------- DRAWING ----------
+// wrapText utility (keeps same behaviour)
+function wrapText(ctxx, text, x, y, maxWidth, lineHeight) {
+    if (!text) return;
+    const words = String(text).split(' ');
+    let line = '';
+    for (let n = 0; n < words.length; n++) {
+        const testLine = line + words[n] + ' ';
+        const metrics = ctxx.measureText(testLine);
+        const testWidth = metrics.width;
+        if (testWidth > maxWidth && n > 0) {
+            ctxx.fillText(line.trim(), x, y);
+            line = words[n] + ' ';
+            y += lineHeight;
+        } else {
+            line = testLine;
+        }
+    }
+    if (line) ctxx.fillText(line.trim(), x, y);
+}
+
+function drawPiPTextToContext(context, cfg) {
+    // cfg: { main, sub, timeStr, footer, topColor, bottomColor, w, h }
+    const { main, sub, timeStr, footer, topColor, bottomColor, w, h } = cfg;
+
+    context.clearRect(0,0,w,h);
+    // background gradient
+    const grad = context.createLinearGradient(0,0,0,h);
+    grad.addColorStop(0, topColor);
+    grad.addColorStop(1, bottomColor);
+    context.fillStyle = grad;
+    context.fillRect(0,0,w,h);
+
+    // larger padding to match higher-res canvas
+    const pad = 28;
+
+    // time (optional) - top-right (larger)
+    if (timeStr) {
+        context.fillStyle = "rgba(255,255,255,0.95)";
+        context.font = "36px 'Space Mono', monospace";
+        context.textAlign = "right";
+        context.fillText(timeStr, w - pad, pad + 12);
+        context.textAlign = "left";
+    }
+
+// main line (scaled version of y=60, lh=28)
+if (main) {
+    context.fillStyle = "white";
+    context.font = "64px 'Google Sans', system-ui, sans-serif";
+    wrapText(context, main, pad, 140, w - pad * 2, 56);
+}
+
+// sub line (scaled version of y=110, lh=22)
+if (sub) {
+    context.font = "42px 'Google Sans', system-ui, sans-serif";
+    context.fillStyle = "rgba(255,255,255,0.95)";
+    wrapText(context, sub, pad, 260, w - pad * 2, 44);
+}
+
+
+    // footer (slightly larger)
+    if (footer) {
+        context.font = "18px 'Google Sans', sans-serif";
+        context.fillStyle = "rgba(255,255,255,0.85)";
+        context.font = "22px 'Google Sans', system-ui, sans-serif";
+        context.fillText("By Jacob N; edited by Felix M - Version 1.3.2", pad, h - 30);
+
+    }
+}
+
+function drawPiP(mainText, subText) {
+    const settings = getPiPSettings();
+    const colors = getPiPColors();
+    const now = new Date();
+    const timeStr = settings.includeTime ? now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'}) : null;
+
+    const cfg = {
+        main: settings.includeMain ? mainText : "",
+        sub: settings.includeSub ? subText : "",
+        timeStr: timeStr,
+        footer: settings.includeFooter,
+        topColor: colors.top,
+        bottomColor: colors.bottom,
+        w: canvas.width,
+        h: canvas.height
+    };
+
+    drawPiPTextToContext(ctx, cfg);
+    // copy to preview canvas at a smaller size for visible UI preview (previewCanvas is 320x180 -> 16:9)
+    try {
+        previewCtx.clearRect(0,0,previewCanvas.width, previewCanvas.height);
+        previewCtx.drawImage(canvas, 0, 0, previewCanvas.width, previewCanvas.height);
+    } catch (e) {
+        // ignore preview draw errors
+    }
+}
+
+// Export a small initial preview quickly while app loads
+function initialPreview(){
+    drawPiP("Loading...", "Please wait");
+}
+
+// Ensure canvas is redrawn periodically so captureStream has frames even when text doesn't change
+let _pIpKeepAliveInterval = null;
+function startPiPKeepAlive() {
+    if (_pIpKeepAliveInterval) return;
+    _pIpKeepAliveInterval = setInterval(() => {
+        drawPiP(mainLine.textContent || "Loading...", subLine.textContent || "");
+    }, 700);
+}
+function stopPiPKeepAlive() {
+    if (_pIpKeepAliveInterval) { clearInterval(_pIpKeepAliveInterval); _pIpKeepAliveInterval = null; }
+}
+
+// ---------- MAIN LOGIC (keeps original behaviour) ----------
+function update() {
+    const now = new Date();
+    const day = now.getDay();
+
+    // update clock UI
+    clockEl.textContent = now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    todayLabel.textContent = now.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'short' });
+
+    // WEEKEND
+    if (day === 6 || day === 0) {
+        const nextMon = new Date(now);
+        const add = (8 - day) % 7;
+        nextMon.setDate(now.getDate() + add);
+        nextMon.setHours(8,0,0,0);
+
+        const hours = diffHours(nextMon, now).toFixed(1);
+
+        mainLine.textContent = "Weekend — relax!";
+        subLine.textContent = `School starts in ${hours} hours`;
+        metaDay.textContent = "Weekend";
+        metaStatus.textContent = "No school today";
+        drawPiP(mainLine.textContent, subLine.textContent);
+        return;
+    }
+
+    const events = getEventsForToday(now);
+
+    // ensure there's a default form start/end to compare against
+    const formStart = TIMES.form ? parseTimeToday(TIMES.form.start, now) : parseTimeToday("08:00", now);
+    const formEnd   = TIMES.form ? parseTimeToday(TIMES.form.end, now) : parseTimeToday("08:35", now);
+    const lastEnd   = events.length ? events[events.length - 1].end : formEnd;
+
+    // Before Form Time
+    if (now < formStart) {
+        const mins = diffMinutes(formStart, now);
+        mainLine.textContent = `Form Time in ${mins} minute${mins === 1 ? "" : "s"}`;
+        subLine.textContent = "";
+        metaDay.textContent = `Week ${getWeekType()}`;
+        metaStatus.textContent = `Before school`;
+        drawPiP(mainLine.textContent, "");
+        return;
+    }
+
+    // During school day (between form start and last scheduled end)
+    if (now >= formStart && now <= lastEnd) {
+        const current = events.find(e => e.start <= now && e.end >= now);
+        if (current) {
+            const minsLeft = diffMinutes(current.end, now);
+            mainLine.textContent = `Current: ${current.label}`;
+            subLine.textContent = `${minsLeft} minute${minsLeft === 1 ? "" : "s"} left`;
+            metaDay.textContent = `Week ${getWeekType()} • ${["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][now.getDay()]}`;
+            metaStatus.textContent = `In session`;
+            drawPiP(mainLine.textContent, subLine.textContent);
+            return;
+        }
+
+        const next = events.find(e => e.start > now);
+        if (next) {
+            const mins = diffMinutes(next.start, now);
+            mainLine.textContent = `Next: ${next.label}`;
+            subLine.textContent = `in ${mins} minute${mins === 1 ? "" : "s"}`;
+            metaDay.textContent = `Week ${getWeekType()}`;
+            metaStatus.textContent = `Waiting`;
+            drawPiP(mainLine.textContent, subLine.textContent);
+            return;
+        }
+
+        // fallback: if no current or next but inside day range
+        const minsLeft = diffMinutes(lastEnd, now);
+        mainLine.textContent = `School day in progress`;
+        subLine.textContent = `${minsLeft} minute${minsLeft === 1 ? "" : "s"} until end`;
+        metaDay.textContent = `Week ${getWeekType()}`;
+        metaStatus.textContent = `Ongoing`;
+        drawPiP(mainLine.textContent, subLine.textContent);
+        return;
+    }
+
+    // After school (Mon–Thu)
+    if (day >= 1 && day <= 4) {
+        const tomorrow = new Date(now);
+        tomorrow.setDate(now.getDate() + 1);
+        tomorrow.setHours(8,0,0,0);
+
+        const hours = diffHours(tomorrow, now).toFixed(1);
+
+        mainLine.textContent = `${hours} hours until the start of school tomorrow`;
+        subLine.textContent = `Sleep well!`;
+        metaDay.textContent = `After school`;
+        metaStatus.textContent = `Done for today`;
+        drawPiP(mainLine.textContent, subLine.textContent);
+        return;
+    }
+
+    // Friday after school → weekend-style message
+    if (day === 5) {
+        const nextMon = new Date(now);
+        nextMon.setDate(now.getDate() + 3);
+        nextMon.setHours(8,0,0,0);
+
+        const hours = diffHours(nextMon, now).toFixed(1);
+        
+        mainLine.textContent = "Weekend — relax!";
+        subLine.textContent = `School starts in ${hours} hours`;
+        metaDay.textContent = `Friday`;
+        metaStatus.textContent = `Weekend soon`;
+        drawPiP(mainLine.textContent, subLine.textContent);
+        return;
+    }
+}
+
+// ---------- UI Wiring ----------
+// Week toggle
+document.getElementById("weekA").addEventListener("click", () => {
+    setWeekType("A");
+    updateWeekToggleUI();
+    update();
+});
+document.getElementById("weekB").addEventListener("click", () => {
+    setWeekType("B");
+    updateWeekToggleUI();
+    update();
+});
+
+// PiP settings modal wiring
+const settingsBtn = document.getElementById("settingsBtn");
+const settingsModal = document.getElementById("settingsModal");
+const closeSettings = document.getElementById("closeSettings");
+const saveSettings = document.getElementById("saveSettings");
+
+const includeMainEl = document.getElementById("includeMain");
+const includeSubEl = document.getElementById("includeSub");
+const includeTimeEl = document.getElementById("includeTime");
+const includeFooterEl = document.getElementById("includeFooter");
+
+settingsBtn.addEventListener("click", () => {
+    const s = getPiPSettings();
+    includeMainEl.checked = !!s.includeMain;
+    includeSubEl.checked = !!s.includeSub;
+    includeTimeEl.checked = !!s.includeTime;
+    includeFooterEl.checked = !!s.includeFooter;
+    updateColorUI();
+    settingsModal.classList.toggle("visible");
+});
+closeSettings.addEventListener("click", () => settingsModal.classList.remove("visible"));
+
+saveSettings.addEventListener("click", () => {
+    const s = {
+        includeMain: !!includeMainEl.checked,
+        includeSub: !!includeSubEl.checked,
+        includeTime: !!includeTimeEl.checked,
+        includeFooter: !!includeFooterEl.checked
+    };
+    setPiPSettings(s);
+    updateColorUI();
+    // redraw with new options
+    drawPiP(mainLine.textContent, subLine.textContent);
+    settingsModal.classList.remove("visible");
+});
+
+// Color pickers wiring
+const topInputEl = document.getElementById("pipTopColor");
+const bottomInputEl = document.getElementById("pipBottomColor");
+
+initPiPColors();
+
+if (topInputEl) {
+    topInputEl.addEventListener("input", (e) => {
+        setPiPTopColor(e.target.value);
+        drawPiP(mainLine.textContent, subLine.textContent);
     });
     topInputEl.addEventListener("change", (e) => {
         setPiPTopColor(e.target.value);
@@ -15,7 +939,6 @@ if (bottomInputEl) {
     });
 }
 
-
 // allow entering PiP on body click (best-effort)
 document.body.addEventListener("click", async (ev) => {
     // if clicking inside settings modal we don't open PiP
@@ -27,21 +950,17 @@ document.body.addEventListener("click", async (ev) => {
     } catch (e) { /* ignore if unavailable */ }
 });
 
-
 // initial preview while app starts
 initialPreview();
-
 
 // export preview canvas to hidden PiP capture periodically so preview remains in sync
 // draw initial immediately:
 drawPiP("Loading...", "Preparing preview");
 
-
 // Initial UI + loop
 updateWeekToggleUI();
 update();
 setInterval(update, 1000);
-
 
 // Keep updating preview canvas (so the tiny visible preview updates smoothly)
 setInterval(() => {
@@ -52,13 +971,10 @@ setInterval(() => {
     } catch (e) {}
 }, 700);
 
-
 // start keep-alive so captureStream has frames even when text unchanged
 startPiPKeepAlive();
 
-
 </script>
-
 
 </body>
 </html>
