@@ -686,7 +686,7 @@ function drawPiPTextToContext(context, cfg) {
 // main line (scaled version of y=60, lh=28)
 if (main) {
     context.fillStyle = "white";
-    context.font = "64px 'Google Sans', system-ui, sans-serif";
+    context.font = "bold 64px 'Google Sans', system-ui, sans-serif";
     wrapText(context, main, pad, 140, w - pad * 2, 56);
 }
 
@@ -703,7 +703,7 @@ if (sub) {
         context.font = "18px 'Google Sans', sans-serif";
         context.fillStyle = "rgba(255,255,255,0.85)";
         context.font = "22px 'Google Sans', system-ui, sans-serif";
-        context.fillText("By Jacob N; edited by Felix M - Version 1.3.4", pad, h - 30);
+        context.fillText("By Jacob N; edited by Felix M - Version 1.3.5", pad, h - 30);
 
     }
 }
